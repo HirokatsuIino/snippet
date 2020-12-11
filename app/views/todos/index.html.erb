@@ -16,13 +16,14 @@
   <title>todo App</title>
 </head>
 <body>
+<%#= render 'todos/header' %>
 <v-app id="app">
   <v-toolbar color="red lighten-3" dark>
     <v-toolbar-title>Todo List</v-toolbar-title>
     <v-spacer></v-spacer>
     <v-btn flat v-on:click="togglePostModal()">New todo</v-btn>
   </v-toolbar>
-  <v-container style="height: auto; max-width: 100%;">
+  <v-container style="height: 100px; max-width: 100%;">
     <v-layout>
       <v-flex xs5>
         <div style="margin:10px">
@@ -38,11 +39,12 @@
         <h2>Search todo</h2>
         <v-text-field v-model="searchWord" v-on:keyup="abstruct" label="Input Keyword" style='margin-top:4px'></v-text-field>
 
+        <!-- 一覧表示 -->
         <draggable>
           <v-card style="margin-top:10px" v-for="todo in todoList">
             <v-card-title primary-title>
               <a v-bind:id='todo.id'></a>
-              <h3 class="headline"> {{ todo.title }} </h3>
+              <h3 class="headline"> {{ todo.title }}:{{ todo.comment.id }} </h3>
             </v-card-title>
             <div style="margin: 10px 20px;">
               <div v-html='showdown.makeHtml(todo.content)'></div>
@@ -182,6 +184,7 @@
 </v-app>
 <script>
     new Vue({
+        // el: '#toolbar',
         el: '#app',
         data () {
             return {
@@ -339,6 +342,5 @@
     })
 
 </script>
-
 </body>
 </html>

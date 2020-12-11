@@ -5,6 +5,14 @@ class TodosController < ApplicationController
   # GET /todos.json
   def index
     @todos = Todo.all
+    @todos_count = Todo.all.count()
+    @commnets_count = Comment.all.count()
+    @commnets = Comment.all
+
+    p @commnets
+    p @commnets_count
+
+    p @todos_count
   end
 
   # GET /todos/1
