@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900|Material+Icons" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/vuetify@1.5/dist/vuetify.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.6.10/dist/vue.js"></script>
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vuetify@1.5/dist/vuetify.js"></script>
+  <script src="https://cdn.rawgit.com/showdownjs/showdown/1.9.0/dist/showdown.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.8.4/Sortable.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Vue.Draggable/2.23.2/vuedraggable.umd.min.js"></script>
+  <title>todo App</title>
+</head>
+<body>
+<v-app id="app">
+  <v-toolbar color="red lighten-3" dark>
+    <v-toolbar-title>Todo List</v-toolbar-title>
+    <v-spacer></v-spacer>
+    <v-btn flat v-on:click="togglePostModal()">New todo</v-btn>
+  </v-toolbar>
+  <v-container style="height: 1000px; max-width: 2400px;">
+    <v-layout>
+      <v-flex xs5>
+        <div style="margin:10px">
+          <h2>Select title</h2>
+          <v-select v-model='description' :items="descrip" label="description" v-on:change="abstruct"></v-select>
+          <h2>Todo List</h2>
+          <ul>
+            <li v-for="todo in todoList"><span id='name' v-on:click="goElem(todo.id)">[{{ todo.id }}] {{ todo.title }}</span></li>
+          </ul>
+        </div>
+      </v-flex>
+      <v-flex xs7 style='margin:10px'>
+        <h2>Search todo</h2>
+        <v-text-field v-model="searchWord" v-on:keyup="abstruct" label="Input Keyword" style='margin-top:4px'></v-text-field>
+
+        <draggable>
+          <v-card style="margin-top:10px" v-for="todo in todoList">
+            <v-card-title primary-title>
+              <a v-bind:id='todo.id'></a>
+              <h3 class="headline"> {{ todo.title }} </h3>
+            </v-card-title>
+            <div style="margin: 10px 20px;">
+              <div v-html='showdown.makeHtml(todo.content)'></div>
+            </div>
+
+            <v-card-actions>
+              <!--<v-btn flat color="red" v-on:click="toggleDetailsModal(snippet.id)">Details</v-btn>-->
+              <v-btn flat color="red" v-on:click="togglePutModal(todo.id)">Detail / Update</v-btn>
+              <v-btn flat color="gray" v-on:click="toggleDeleteModal(todo.id)">Delete</v-btn>
+              <v-spacer></v-spacer>
+              <!--<v-btn flat color="red" v-on:click="goTop">Go Top</v-btn>-->
+
+            </v-card-actions>
+          </v-card>
+        </draggable>
+
+      </v-flex>
+    </v-layout>
+
+    <!-- 詳細 ダイアログ -->
+    <v-dialog v-model="dialogdetailFlag" width="800" persistent>
+      <v-card>
+        <v-card-title class="headline red lighten-3 white--text" primary-title>
+          Detail Form
+        </v-card-title>
+        <v-text-field v-model="detailTitle" label="todo Title" required style='margin:20px; margin-top:30px'></v-text-field>
+        <v-flex d-flex>
+          <v-text-field v-model="detailLanguage" label="description" required style='margin:20px; margin-bottom:0px; margin-left:20px'></v-text-field>
+          <v-select v-model='detailLanguage' :items="languagesForEdit" label="Select from history" style='margin:20px; margin-bottom:0px;margin-left: 0px'></v-select>
+        </v-flex>
+        </v-flex>
+        <v-card-text>
+          <p>todo</p>
+          <div style='width:100%;'>
+            <textarea style='width:100%; height:300px; background-color:#efefef; padding:3px' v-model='detailContents'></textarea>
+          </div>
+        </v-card-text>
+        <v-divider></v-divider>
+
+        <v-card-actions>
+          <v-btn color="#grey lighten-4" flat v-on:click="toggleDetailsModal">
+            Cancel
+          </v-btn>
+          <v-spacer></v-spacer>
+          <v-btn color="red" flat v-on:click="togglePutModal(todo.id)">
+            更新
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- 作成 ダイアログ -->
+    <v-dialog v-model="dialogPostFlag" width="800" persistent>
+      <v-card>
+        <v-card-title class="headline red lighten-3 white--text" primary-title>
+          Create Form
+        </v-card-title>
+        <v-text-field v-model="postTitle" label="todoTitle" required style='margin:20px; margin-top:30px'></v-text-field>
+        <v-flex d-flex>
+          <v-text-field v-model="postDescription" label="description" required style='margin:20px; margin-bottom:0px; margin-left:20px'></v-text-field>
+<!--          <v-select v-model='postDescription' :items="languagesForEdit" label="Select from history" style='margin:20px; margin-bottom:0px;margin-left: 0px'></v-select>-->
+        </v-flex>
+        </v-flex>
+        <v-card-text>
+          <p>todo</p>
+          <div style='width:100%;'>
+            <textarea style='width:100%; height:300px; background-color:#efefef; padding:3px' v-model='postContents'></textarea>
+          </div>
+        </v-card-text>
+        <v-divider></v-divider>
+
+        <v-card-actions>
+          <v-btn color="#grey lighten-4" flat v-on:click="togglePostModal">
+            Cancel
+          </v-btn>
+          <v-spacer></v-spacer>
+          <v-btn color="red" flat v-on:click="postTodos">
+            Add todo
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- 更新 ダイアログ -->
+    <v-dialog v-model="dialogPutFlag" width="800" persistent>
+      <v-card>
+        <v-card-title class="headline red lighten-3 white--text" primary-title>
+          Edit Form
+        </v-card-title>
+
+        <v-text-field v-model="putTitle" label="todo Title" required style='margin:20px; margin-top:30px'></v-text-field>
+        <v-flex d-flex>
+          <v-text-field v-model="putdescription" label="description" required style='margin:20px; margin-bottom:0px; margin-left:20px'></v-text-field>
+        </v-flex>
+        <v-card-text>
+          <p>todo</p>
+          <div style='width:100%;'>
+            <textarea style='width:100%; height:300px; background-color:#efefef; padding:3px' v-model='putContents'></textarea>
+          </div>
+        </v-card-text>
+
+        <v-divider></v-divider>
+
+        <v-card-actions>
+          <v-btn color="#grey lighten-4" flat v-on:click="togglePutModal">
+            Cancel
+          </v-btn>
+          <v-spacer></v-spacer>
+          <v-btn color="red" flat v-on:click="postTodos">
+            Update todo
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- 削除 ダイアログ -->
+    <v-dialog v-model="dialogDeleteFlag" width="400">
+      <v-card>
+        <v-card-title class="headline red lighten-3 white--text" primary-title>
+          Confirm
+        </v-card-title>
+        <v-spacer></v-spacer>
+        <v-card-text>
+          <p>本当に削除してもよろしいですか？</p>
+        </v-card-text>
+
+        <v-divider></v-divider>
+
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="red" flat v-on:click="deleteSnippet()">
+            Delete
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+  </v-container>
+</v-app>
+<script>
+
+    new Vue({
+        el: '#app',
+        data () {
+            return {
+                todoList: ['',''],
+                allData: ['',''],
+                descrip: ['All'],
+                descripForEdit: [],
+                description: 'ALL',
+
+                //作成
+                dialogPostFlag: false,
+                postTitle: '',
+                postDescription: '',
+                postContents: '',
+
+                //詳細
+                dialogdetailFlag: false,
+                detailTitle: '',
+                detailLanguage: '',
+                detailContents: '',
+
+                //更新
+                dialogPutFlag: false,
+                putTitle: '',
+                putdescription: '',
+                putContents: '',
+
+                //削除
+                dialogDeleteFlag: false,
+                searchWord: ''
+
+            }
+        },
+        mounted () {
+            this.listSnippet();
+            options = { headerLevelStart: 3, omitExtraWLInCodeBlocks: true, tables: true, simpleLineBreaks: true, simplifiedAutoLink: true }
+            this.showdown = new showdown.Converter(options)
+        },
+        methods: {
+            listSnippet: function() {
+
+                //一覧取得
+                axios.get('/todos.json')
+                    .then(response => {
+                            this.allData = response.data
+                            this.todoList = this.allData
+                            this.lists();
+                            this.abstruct();
+                        }
+                    );
+            },
+            lists: function() {
+                this.description = []
+                this.descripForEdit = []
+                this.descrip.push('ALL')
+                for (i=0;i<this.allData.length;i++) {
+                    if (this.descrip.indexOf(this.allData[i].description) == -1) {
+                        this.descrip.push(this.allData[i].description)
+                        this.descripForEdit.push(this.allData[i].description)
+                    }
+                }
+            },
+
+            togglePostModal: function() {
+                this.dialogPostFlag = !this.dialogPostFlag
+            },
+
+            //詳細処理
+            toggleDetailsModal: function(id) {
+                axios.get('/todos/' + id + '.json')
+                    .then(response => {
+                            this.detailTitle = response.data.title
+                            this.detailLanguage = response.data.description
+                            this.detailContents = response.data.content
+                        }
+                    );
+
+                this.id = id
+                this.dialogdetailFlag = !this.dialogdetailFlag
+            },
+
+            //更新処理
+            togglePutModal: function(id) {
+                axios.get('/todos/' + id + '.json')
+                    .then(response => {
+                            this.putTitle = response.data.title
+                            this.putdescription = response.data.description
+                            this.putContents = response.data.content
+                        }
+                    );
+
+                this.id = id
+                this.dialogPutFlag = !this.dialogPutFlag
+            },
+
+            //削除処理
+            deleteSnippet: function() {
+                axios.delete('/todos/' + this.id + '.json')
+                    .then(response => {
+                            this.listSnippet();
+                        }
+                    );
+                this.dialogDeleteFlag = !this.dialogDeleteFlag
+            },
+            toggleDeleteModal: function(id) {
+                this.id = id
+                this.dialogDeleteFlag = !this.dialogDeleteFlag
+            },
+            goElem: function(id) {
+                document.getElementById(id).scrollIntoView(true)
+            },
+            goTop: function() {
+                document.getElementById("app").scrollIntoView(true)
+            },
+            abstruct: function() {
+                if (this.description == 'ALL') {
+                    this.todoList = []
+                    for (i=0;i<this.allData.length;i++) {
+                        if ((this.allData[i].content.indexOf(this.searchWord) !== -1) || (this.allData[i].title.indexOf(this.searchWord) !== -1) || (this.allData[i].description.indexOf(this.searchWord) !== -1)) { // 説明 4.7
+                            this.todoList.push(this.allData[i])
+                        }
+                    }
+                } else if (this.description != '') {
+                    this.todoList = []
+                    for (i=0;i<this.allData.length;i++) {
+                        if (this.allData[i].description == this.description) {
+                            if ((this.allData[i].content.indexOf(this.searchWord) !== -1) || (this.allData[i].title.indexOf(this.searchWord) !== -1) || (this.allData[i].description.indexOf(this.searchWord) !== -1)) { // 説明 4.7
+                                this.todoList.push(this.allData[i])
+                            }
+                        }
+                    }
+                }
+            },
+            postTodos: function() {
+                axios.put('/todos/' + this.id + '.json', {title:this.putTitle, description:this.putdescription, content:this.putContents})
+                    .then(response => {
+                            this.listSnippet();
+                        }
+                    );
+                this.dialogPutFlag = !this.dialogPutFlag
+            },
+            postTodos: function() {
+                axios.post('/todos.json', {title:this.postTitle, description:this.postDescription, content:this.postContents})
+                    .then(response => {
+                            this.listSnippet();
+                            this.postTitle = ''
+                            this.postDescription = ''
+                            this.postContents = ''
+                        }
+                    );
+
+                this.dialogPostFlag = !this.dialogPostFlag
+            },
+
+        }
+    })
+
+</script>
+</body>
+</html>
+
+
+
+<!--<p id="notice"><%#= notice %></p>-->
+
+<!--<h1>Snippets</h1>-->
+
+<!--<table>-->
+<!--  <thead>-->
+<!--    <tr>-->
+<!--      <th>Title</th>-->
+<!--      <th>Language</th>-->
+<!--      <th>Contents</th>-->
+<!--      <th colspan="3"></th>-->
+<!--    </tr>-->
+<!--  </thead>-->
+
+<!--  <tbody>-->
+<%# @snippets.each do |snippet| %>
+<!--      <tr>-->
+<!--        <td><%#= snippet.title %></td>-->
+<!--        <td><%#= snippet.language %></td>-->
+<!--        <td><%#= snippet.contents %></td>-->
+<!--        <td><%#= link_to 'Show', snippet %></td>-->
+<!--        <td><%#= link_to 'Edit', edit_snippet_path(snippet) %></td>-->
+<!--        <td><%#= link_to 'Destroy', snippet, method: :delete, data: { confirm: 'Are you sure?' } %></td>-->
+<!--      </tr>-->
+<%# end %>
+<!--  </tbody>-->
+<!--</table>-->
+
+<!--<br>-->
+
+<%#= link_to 'New Snippet', new_snippet_path %>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!--<p id="notice"><%#= notice %></p>-->
+
+<!--<h1>Todos</h1>-->
+
+<!--<table>-->
+<!--  <thead>-->
+<!--    <tr>-->
+<!--      <th>Title</th>-->
+<!--      <th>Description</th>-->
+<!--      <th>Content</th>-->
+<!--      <th colspan="3"></th>-->
+<!--    </tr>-->
+<!--  </thead>-->
+
+<!--  <tbody>-->
+    <%# @todos.each do |todo| %>
+<!--      <tr>-->
+<!--        <td><%#= todo.title %></td>-->
+<!--        <td><%#= todo.description %></td>-->
+<!--        <td><%#= todo.content %></td>-->
+<!--        <td><%#= link_to 'Show', todo %></td>-->
+<!--        <td><%#= link_to 'Edit', edit_todo_path(todo) %></td>-->
+<!--        <td><%#= link_to 'Destroy', todo, method: :delete, data: { confirm: 'Are you sure?' } %></td>-->
+<!--      </tr>-->
+    <%# end %>
+<!--  </tbody>-->
+<!--</table>-->
+
+<!--<br>-->
+
+<%#= link_to 'New Todo', new_todo_path %>
