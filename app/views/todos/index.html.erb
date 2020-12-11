@@ -46,7 +46,7 @@
             </div>
 
             <v-card-actions>
-              <!--<v-btn flat color="red" v-on:click="toggleDetailsModal(snippet.id)">Details</v-btn>-->
+              <v-btn flat color="red" v-on:click="toggleDetailsModal(todo.id)">Details</v-btn>
               <v-btn flat color="red" v-on:click="togglePutModal(todo.id)">Detail / Update</v-btn>
               <v-btn flat color="gray" v-on:click="toggleDeleteModal(todo.id)">Delete</v-btn>
               <v-spacer></v-spacer>
@@ -67,8 +67,8 @@
         </v-card-title>
         <v-text-field v-model="detailTitle" label="todo Title" required style='margin:20px; margin-top:30px'></v-text-field>
         <v-flex d-flex>
-          <v-text-field v-model="detailLanguage" label="description" required style='margin:20px; margin-bottom:0px; margin-left:20px'></v-text-field>
-          <v-select v-model='detailLanguage' :items="languagesForEdit" label="Select from history" style='margin:20px; margin-bottom:0px;margin-left: 0px'></v-select>
+          <v-text-field v-model="detailDescription" label="description" required style='margin:20px; margin-bottom:0px; margin-left:20px'></v-text-field>
+<!--          <v-select v-model='detailDescription' :items="descriptionForEdit" label="Select from history" style='margin:20px; margin-bottom:0px;margin-left: 0px'></v-select>-->
         </v-flex>
         </v-flex>
         <v-card-text>
@@ -100,7 +100,7 @@
         <v-text-field v-model="postTitle" label="todoTitle" required style='margin:20px; margin-top:30px'></v-text-field>
         <v-flex d-flex>
           <v-text-field v-model="postDescription" label="description" required style='margin:20px; margin-bottom:0px; margin-left:20px'></v-text-field>
-<!--          <v-select v-model='postDescription' :items="languagesForEdit" label="Select from history" style='margin:20px; margin-bottom:0px;margin-left: 0px'></v-select>-->
+<!--          <v-select v-model='postDescription' :items="descriptionForEdit" label="Select from history" style='margin:20px; margin-bottom:0px;margin-left: 0px'></v-select>-->
         </v-flex>
         </v-flex>
         <v-card-text>
@@ -199,7 +199,7 @@
                 //詳細
                 dialogdetailFlag: false,
                 detailTitle: '',
-                detailLanguage: '',
+                detailDescription: '',
                 detailContents: '',
 
                 //更新
@@ -253,7 +253,7 @@
                 axios.get('/todos/' + id + '.json')
                     .then(response => {
                             this.detailTitle = response.data.title
-                            this.detailLanguage = response.data.description
+                            this.detailDescription = response.data.description
                             this.detailContents = response.data.content
                         }
                     );
